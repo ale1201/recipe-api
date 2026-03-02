@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 from app.schemas.recipe import RecipeSummary
+from app.schemas.pagination import PaginatedResponse
 
 
 class SlotType(str, Enum):
@@ -47,6 +48,8 @@ class MealPlanResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class MealPlanPaginatedResponse(PaginatedResponse):
+    items: list[MealPlanResponse]
 
 class ShoppingListItem(BaseModel):
     name: str

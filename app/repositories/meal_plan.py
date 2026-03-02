@@ -17,6 +17,7 @@ class MealPlanRepository:
         """
         result = await self.db.execute(
             select(MealPlan)
+            .options(selectinload(MealPlan.items).selectinload(MealPlanItem.recipe))
             .where(MealPlan.user_id == user_id)
             .offset(skip)
             .limit(limit)
@@ -39,12 +40,12 @@ class MealPlanRepository:
     async def create(self, meal_plan: MealPlan) -> MealPlan:
         self.db.add(meal_plan)
         await self.db.flush()
-        await self.db.refresh(meal_plan, attribute_names=["items"])
+        #await self.db.refresh(meal_plan, attribute_names=["items"])
         return meal_plan
 
     async def update(self, meal_plan: MealPlan) -> MealPlan:
         await self.db.flush()
-        await self.db.refresh(meal_plan, attribute_names=["items"])
+        #await self.db.refresh(meal_plan, attribute_names=["items"])
         return meal_plan
 
     async def delete(self, meal_plan: MealPlan) -> None:

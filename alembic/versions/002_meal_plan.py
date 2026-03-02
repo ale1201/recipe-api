@@ -2,7 +2,7 @@
 
 Revision ID: 002
 Revises: 001
-Create Date: 2026-03-02 00:59:45.387510
+Create Date: 2026-03-02 21:52:13.105411
 
 """
 from typing import Sequence, Union
@@ -39,7 +39,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['meal_plan_id'], ['meal_plans.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['recipe_id'], ['recipes.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('meal_plan_id', 'day_of_week', 'slot', name='uq_meal_plan_slot')
+    sa.UniqueConstraint('meal_plan_id', 'day_of_week', 'slot', 'recipe_id', name='uq_meal_plan_slot')
     )
     op.create_index(op.f('ix_meal_plan_items_id'), 'meal_plan_items', ['id'], unique=False)
     op.create_index(op.f('ix_meal_plan_items_meal_plan_id'), 'meal_plan_items', ['meal_plan_id'], unique=False)

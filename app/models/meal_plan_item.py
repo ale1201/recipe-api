@@ -7,7 +7,7 @@ from app.database import Base
 class MealPlanItem(Base):
     __tablename__ = "meal_plan_items"
     __table_args__ = (
-        UniqueConstraint('meal_plan_id', 'day_of_week', 'slot', name='uq_meal_plan_slot'),
+        UniqueConstraint('meal_plan_id', 'day_of_week', 'slot', 'recipe_id', name='uq_meal_plan_slot'),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
