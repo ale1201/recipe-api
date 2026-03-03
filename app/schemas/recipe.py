@@ -11,7 +11,10 @@ class RecipeCreate(BaseModel):
     cuisine: str | None = Field(None, max_length=100)
     prep_time_minutes: int | None = Field(None, ge=1)
     servings: int | None = Field(None, ge=1)
-    ingredients: list[IngredientCreate] = []
+    # ingredients: list[IngredientCreate] = []
+    # Eventhough Pydantic can hanlde mutable default values like lists, it's generally safer to 
+    # use default_factory 
+    ingredients: list[IngredientCreate] = Field(default_factory=list)
 
 
 class RecipeUpdate(BaseModel):
@@ -33,8 +36,10 @@ class RecipeResponse(BaseModel):
     user_id: int
     created_at: datetime
     updated_at: datetime
-    ingredients: list[IngredientResponse] = []
-
+    # ingredients: list[IngredientResponse] = []
+    # Eventhough Pydantic can hanlde mutable default values like lists, it's generally safer to 
+    # use default_factory 
+    ingredients: list[IngredientCreate] = Field(default_factory=list)
     model_config = {"from_attributes": True}
 
 
@@ -44,7 +49,8 @@ class RecipeSummary(BaseModel):
     cuisine: str | None
     prep_time_minutes: int | None
     servings: int | None
-    user_id: int
-    created_at: datetime
+    # Not need to include user_id, created_at in summary response, leak internal details, and not useful for listing
+    # user_id: int
+    # created_at: datetime
 
     model_config = {"from_attributes": True}
