@@ -172,7 +172,7 @@ class MealPlanService:
         for item in full_meal_plan.items:
             if item.recipe and item.recipe.ingredients:
                 for ingredient in item.recipe.ingredients:
-                    key = (ingredient.name.strip(), ingredient.unit.strip() if ingredient.unit else None)
+                    key = (ingredient.name.strip().lower(), ingredient.unit.strip().lower() if ingredient.unit else None)
                     if ingredient.quantity is not None:
                         aggregated[key] = aggregated.get(key, 0.0) + float(ingredient.quantity)
                     else:
