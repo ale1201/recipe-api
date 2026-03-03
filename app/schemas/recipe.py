@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.schemas.ingredient import IngredientCreate, IngredientResponse
+from app.schemas.pagination import PaginatedResponse
 
 
 class RecipeCreate(BaseModel):
@@ -39,8 +40,11 @@ class RecipeResponse(BaseModel):
     # ingredients: list[IngredientResponse] = []
     # Eventhough Pydantic can hanlde mutable default values like lists, it's generally safer to 
     # use default_factory 
-    ingredients: list[IngredientCreate] = Field(default_factory=list)
+    ingredients: list[IngredientResponse] = Field(default_factory=list)
     model_config = {"from_attributes": True}
+
+class RecipePaginatedResponse(PaginatedResponse):
+    items: list[RecipeResponse]
 
 
 class RecipeSummary(BaseModel):

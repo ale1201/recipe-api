@@ -4,14 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.user import User
 from app.api.v1.dependencies import get_current_user
-from app.schemas.recipe import RecipeCreate, RecipeUpdate, RecipeResponse, RecipeSummary
+from app.schemas.recipe import RecipeCreate, RecipePaginatedResponse, RecipeUpdate, RecipeResponse, RecipeSummary
 from app.services.recipe import RecipeService
-from app.repositories.recipe import RecipeRepository
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 
-@router.get("/", response_model=dict)
+@router.get("/", response_model=RecipePaginatedResponse)
 async def list_recipes(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -20,30 +19,13 @@ async def list_recipes(
     """List all recipes with pagination."""
     recipe_service = RecipeService(db)
     recipes, total = await recipe_service.list_recipes(skip=skip, limit=limit)
-
-    recipe_repo = RecipeRepository(db)
-    result = []
-    for recipe in recipes:
-        ingredients = await recipe_repo.get_ingredients(recipe.id)
-        result.append(
-            RecipeResponse(
-                id=recipe.id,
-                title=recipe.title,
-                description=recipe.description,
-                cuisine=recipe.cuisine,
-                prep_time_minutes=recipe.prep_time_minutes,
-                servings=recipe.servings,
-                user_id=recipe.user_id,
-                created_at=recipe.created_at,
-                updated_at=recipe.updated_at,
-                ingredients=[
-                    {"id": ing.id, "name": ing.name, "quantity": ing.quantity, "unit": ing.unit}
-                    for ing in ingredients
-                ],
-            )
-        )
-
-    return {"items": result, "total": total, "skip": skip, "limit": limit}
+    #Changed all logic because of the eager loading of ingredients in the repository, now we can return all data in one go without extra queries
+    return RecipePaginatedResponse(
+        items=recipes,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{recipe_id}", response_model=RecipeResponse)

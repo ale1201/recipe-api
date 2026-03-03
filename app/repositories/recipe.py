@@ -12,7 +12,8 @@ class RecipeRepository:
 
     async def get_all(self, skip: int = 0, limit: int = 20) -> list[Recipe]:
         result = await self.db.execute(
-            select(Recipe).offset(skip).limit(limit)
+            #better to add eager loading for ingredients
+            select(Recipe).options(selectinload(Recipe.ingredients)).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
 
@@ -28,14 +29,15 @@ class RecipeRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_user(self, user_id: int, skip: int = 0, limit: int = 20) -> list[Recipe]:
-        result = await self.db.execute(
-            select(Recipe)
-            .where(Recipe.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
-        )
-        return list(result.scalars().all())
+#Method never used
+#    async def get_by_user(self, user_id: int, skip: int = 0, limit: int = 20) -> list[Recipe]:
+#        result = await self.db.execute(
+#            select(Recipe)
+#            .where(Recipe.user_id == user_id)
+#            .offset(skip)
+#            .limit(limit)
+#        )
+#        return list(result.scalars().all())
 
     async def create(self, recipe: Recipe) -> Recipe:
         self.db.add(recipe)
@@ -52,8 +54,9 @@ class RecipeRepository:
         await self.db.delete(recipe)
         await self.db.flush()
 
-    async def get_ingredients(self, recipe_id: int) -> list[Ingredient]:
-        result = await self.db.execute(
-            select(Ingredient).where(Ingredient.recipe_id == recipe_id)
-        )
-        return list(result.scalars().all())
+#No needed with eager loading in get_by_id, 
+# async def get_ingredients(self, recipe_id: int) -> list[Ingredient]:
+#        result = await self.db.execute(
+#            select(Ingredient).where(Ingredient.recipe_id == recipe_id)
+#        )
+#        return list(result.scalars().all())

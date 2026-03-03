@@ -40,12 +40,10 @@ class MealPlanRepository:
     async def create(self, meal_plan: MealPlan) -> MealPlan:
         self.db.add(meal_plan)
         await self.db.flush()
-        #await self.db.refresh(meal_plan, attribute_names=["items"])
         return meal_plan
 
     async def update(self, meal_plan: MealPlan) -> MealPlan:
         await self.db.flush()
-        #await self.db.refresh(meal_plan, attribute_names=["items"])
         return meal_plan
 
     async def delete(self, meal_plan: MealPlan) -> None:

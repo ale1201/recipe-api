@@ -41,9 +41,6 @@ class MealPlanUpdate(BaseModel):
 class MealPlanResponse(BaseModel):
     id: int
     name: str
-    user_id: int
-    created_at: datetime
-    updated_at: datetime
     items: list[MealPlanItemResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
