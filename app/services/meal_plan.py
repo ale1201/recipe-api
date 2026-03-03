@@ -2,36 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from asyncpg.exceptions import UniqueViolationError
-
 from app.models.meal_plan import MealPlan
 from app.models.meal_plan_item import MealPlanItem
 from app.models.user import User
 from app.repositories.meal_plan import MealPlanRepository
 from app.schemas.meal_plan import MealPlanCreate, MealPlanUpdate, MealPlanShoppingList, ShoppingListItem
 
-try:
-    from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
-except Exception:  # pragma: no cover
-    UniqueViolationError = None  # type: ignore
-    ForeignKeyViolationError = None  # type: ignore
-
-
-def _is_unique_violation(exc: IntegrityError) -> bool:
-    orig = getattr(exc, "orig", None)
-    print("here")
-    print(orig)
-    print(isinstance(orig, UniqueViolationError))
-    print("orig type:", type(orig))
-    print("sqlstate:", getattr(orig, "sqlstate", None))
-    print("pgcode:", getattr(orig, "pgcode", None))
-    print("message:", str(orig))
-    return bool(UniqueViolationError and isinstance(orig, UniqueViolationError))
-
-
-def _is_fk_violation(exc: IntegrityError) -> bool:
-    orig = getattr(exc, "orig", None)
-    return bool(ForeignKeyViolationError and isinstance(orig, ForeignKeyViolationError))
 
 class MealPlanService:
     def __init__(self, db: AsyncSession):
@@ -80,23 +56,9 @@ class MealPlanService:
             # Roll back the session so it can be used again in this request
             await self.db.rollback()
 
-            # Detect unique constraint violation (postgres/asyncpg)
-            if _is_unique_violation(e):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Duplicate meal plan item: the same recipe is already assigned to this day and slot.",
-                ) from e
-
-            if _is_fk_violation(e):
-                # recipe_id does not exist (or other FK issue)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid recipe_id: referenced recipe does not exist.",
-                ) from e
-
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Database integrity error while creating meal plan: {e.orig if hasattr(e, 'orig') else str(e)}",
+                detail=f"Database integrity error while creating meal plan",
             ) from e
         # Re-fetch with eager loading to avoid async lazy-load during response serialization
         full = await self.meal_plan_repo.get_by_id(created.id)
@@ -129,22 +91,9 @@ class MealPlanService:
         except IntegrityError as e:
             await self.db.rollback()
 
-            if _is_unique_violation(e):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Duplicate meal plan item: the same recipe is already assigned to this day and slot.",
-                ) from e
-
-            if _is_fk_violation(e):
-                # recipe_id does not exist (or other FK issue)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid recipe_id: referenced recipe does not exist.",
-                ) from e
-
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Database integrity error while updating meal plan: {e.orig if hasattr(e, 'orig') else str(e)}",
+                detail=f"Database integrity error while updating meal plan",
             ) from e
         # Re-fetch with eager loading for response
         full = await self.meal_plan_repo.get_by_id(updated.id)

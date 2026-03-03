@@ -15,6 +15,8 @@ TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_com
 @pytest_asyncio.fixture(autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
+        #To prevent laky tests, drop and recreate the schema before each test run. In a real-world scenario, you might want to use transactions or savepoints instead for better performance.
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
