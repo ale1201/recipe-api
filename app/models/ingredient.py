@@ -7,6 +7,7 @@ from app.database import Base
 class Ingredient(Base):
     __tablename__ = "ingredients"
 
+    #PKs are indexed by default, explicit index is redundant (extra indexes in migrations)
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     recipe_id: Mapped[int] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
