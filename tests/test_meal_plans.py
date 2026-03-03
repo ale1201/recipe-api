@@ -107,7 +107,7 @@ async def test_create_meal_plan_duplicate_item_conflict(client, auth_headers, re
         },
         headers=auth_headers,
     )
-    assert "UNIQUE constraint failed" in  resp.text
+    assert "Database integrity error while creating meal plan" in  resp.text
     assert resp.status_code == 400, resp.text
 
 @pytest.mark.asyncio
