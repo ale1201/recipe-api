@@ -75,3 +75,55 @@ To keep the shopping list “clean” and meaningful:
 
 ---
 
+## Scaling considerations
+The current architecture is appropriate for development and low-traffic use. If the API served 10,000 concurrent users, the primary concerns would be database load, connection management, and request latency.
+
+### Database
+- Majority of traffic (GET requests) can be routed to read replicas, reserving the primary for writes, so allowing read replicas would be essential
+
+- Use efficient eager-loading (`selectinload`) to avoid N+1 queries in shopping list generation.
+- Ensure all foreign key columns used in filter querys are indexed (`meal_plans.user_id`, `meal_plan_items.meal_plan_id`, `meal_plan_items.recipe_id`). This is already applied in the current model.
+- Considerations in caching the shopping list result for a meal plan if meal plans are read frequently but updated rarely. the shopping list endpoint performs a deep join chain, under high load this query should be profiled
+
+### Caching
+The shopping list for a meal plan is expensive to compute and changes only when the plan is updated. A short cache can be applied to it. Recipe ingredient data changes infrequently and could also be cached at the recipe level. In this way, the query can be optimize using only cache strategies.
+
+### Connection pooling
+- Tweak SQLAlchemy async initialization pool size and overflow to match higher concurrency.
+- Add `pool_pre_ping=True` to avoid failures from stale connections.
+
+### Horizontal scaling
+- Multiple instances can run behind a load balancer without coordination, this would help with high concurrency. Authentication uses JWT, which is stateless and scales without a shared session store.
+
+
+## Production readiness
+
+Before deploying to production, I would add or adjust the following:
+
+### Schema management
+- Use Alembic migrations as the single source of truth for schema changes. Limit database access for developers with this.
+- Migrations should be run as a separate step in the deployment pipeline before deploying any new version.
+
+### Security
+- Load secrets (DB URL, JWT secret) from required environment variables or a secret manager, delete all hardcoded secret deaults.
+- Restrict CORS origins (avoid using `allow_origins=["*"]` in production).
+- Protect authentication endpoints from brute-force attacks with a rate limiting
+
+
+### Reliability 
+- Map expected database constraint violations (like unique constraint violations) to specific HTTP errors and rollback the failed transaction.
+- Add health endpoints for deployment platforms.
+- Make sure that requests that are still being processed are completed before the process exits.
+
+### Observability
+
+* Make use of structured JSON logs so that log aggregation tools (like Datadog) can parse and query them, and devs can retrieve information about possible errors.
+* Expose a metrics endpoint covering request counts, latency percentiles, and error rates.
+
+
+### CI/CD
+- Add CI pipeline steps:
+  - `pytest`
+  - linting or formatting
+- Run migrations automatically in deployment pipeline (using `alembic upgrade head`).
+- Docker Compose setup file should closely mirror the production environment to catch configuration issues early.
